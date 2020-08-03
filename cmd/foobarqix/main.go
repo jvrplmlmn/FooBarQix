@@ -2,15 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+
+	"github.com/jvrplmlmn/FooBarQuix/internal/service"
 )
 
 type Config struct {
@@ -32,6 +36,7 @@ func main() {
 	// Configure the HTTP multiplexer
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", ReadinessHandler)
+	mux.HandleFunc("/", NewNumberProcessor(service.NewFooBarQix()).Handler)
 
 	// Configure the HTTP server
 	httpServer := &http.Server{
@@ -68,4 +73,38 @@ func ReadinessHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "ok"}`))
+}
+
+type NumberProcessor struct {
+	processor service.Processor
+}
+
+func NewNumberProcessor(processor service.Processor) *NumberProcessor {
+	return &NumberProcessor{processor: processor}
+}
+
+type Response struct {
+	Result string `json:"result"`
+}
+
+func (h *NumberProcessor) Handler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	number, err := strconv.Atoi(r.URL.EscapedPath()[1:])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	transformedNumber := h.processor.CalculateForNumber(number)
+	resp, err := json.Marshal(Response{Result: transformedNumber})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(resp)
 }
