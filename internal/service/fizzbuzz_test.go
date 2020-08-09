@@ -36,7 +36,7 @@ func TestFizzBuzz(t *testing.T) {
 		{333, "333"},
 	}
 
-	s := NewFizzBuzzService()
+	s := NewFizzBuzz()
 	for _, tt := range tests {
 		name := func(in int) string {
 			return fmt.Sprintf("%d", tt.in)

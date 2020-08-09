@@ -21,6 +21,8 @@ type Config struct {
 	Host string
 	Port string `default:"80"`
 
+	EasterEgg bool `default:"false"`
+
 	ShutdownTimeout time.Duration `default:"5s"`
 }
 
@@ -33,10 +35,15 @@ func main() {
 		log.Fatalf("Failed to process config from environment variables: %s", err)
 	}
 
+	s := service.NewFooBarQix()
+	if c.EasterEgg {
+		s = service.NewFizzBuzz()
+	}
+
 	// Configure the HTTP multiplexer
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", ReadinessHandler)
-	mux.HandleFunc("/", NewNumberProcessor(service.NewFooBarQix()).Handler)
+	mux.HandleFunc("/", NewNumberProcessor(s).Handler)
 
 	// Configure the HTTP server
 	httpServer := &http.Server{
