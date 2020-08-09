@@ -1,0 +1,21 @@
+---
+kind: pipeline
+type: kubernetes
+name: default
+
+steps:
+- name: build
+  image: golang
+  commands:
+  - go test ./...
+  - go build
+- name: docker
+  image: plugins/docker
+  settings:
+    registry: registry.javierpalomo.xyz
+    repo: registry.javierpalomo.xyz/foobarqix
+    tag: ${DRONE_REPO_BRANCH}-${DRONE_COMMIT_SHA}
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
