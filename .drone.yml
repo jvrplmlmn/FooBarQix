@@ -4,7 +4,7 @@ type: kubernetes
 name: default
 
 steps:
-- name: build
+- name: test 
   image: golang
   commands:
   - go test ./...
